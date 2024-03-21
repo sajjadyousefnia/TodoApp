@@ -9,12 +9,12 @@ import androidx.room.Update
 import com.sajjady.todoapp.Database.Domain.Note
 
 @Dao
-interface NoteItemDao {
+interface NoteDao {
     @Query("SELECT * FROM Note")
     fun getAll(): List<Note>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(note: Note)
+     fun insert(note: Note)
 
     @Delete
     suspend fun delete(item: Note)

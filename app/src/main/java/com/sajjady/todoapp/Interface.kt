@@ -1,5 +1,12 @@
 package com.sajjady.todoapp
 
+import com.sajjady.todoapp.Database.Domain.Note
+
 interface OnFloatingActionButtonClickListener {
-    fun showNewNoteDialog(open: Boolean)
+    fun showNoteDialog(open: Boolean)
+}
+
+interface OnAddNoteItemListener {
+    fun addNoteUpdateList(note: Note)
+    fun showSnackbar()
 }

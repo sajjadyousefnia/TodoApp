@@ -3,12 +3,10 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     id("com.google.devtools.ksp")
     id ("kotlin-parcelize")
+}
 
-}
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
 android {
+
     namespace = "com.sajjady.todoapp"
     compileSdk = 34
 
@@ -74,9 +72,13 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    implementation ("com.github.samanzamani:PersianDate:1.7.1")
 
-
+    implementation ("androidx.compose.ui:ui-tooling-preview:1.6.3")
+    implementation ("androidx.compose.ui:ui:$1.6.3")
+    implementation("androidx.compose.ui:ui-geometry:1.6.3")
+    implementation("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.9.0-1.0.13")
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
-    annotationProcessor("androidx.room:room-compiler:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
 }
