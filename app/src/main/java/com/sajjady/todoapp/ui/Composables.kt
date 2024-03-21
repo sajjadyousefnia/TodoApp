@@ -9,11 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -61,10 +59,10 @@ import com.sajjady.todoapp.Database.Domain.Note
 import com.sajjady.todoapp.OnAddNoteItemListener
 import com.sajjady.todoapp.OnFloatingActionButtonClickListener
 import com.sajjady.todoapp.R
+import com.sajjady.todoapp.checkIfNotEmpty
 import com.sajjady.todoapp.splitStringByWords
 import com.sajjady.todoapp.ui.theme.primaryColor
 import com.sajjady.todoapp.ui.theme.whiteColor
-import org.w3c.dom.Text
 import saman.zamani.persiandate.PersianDate
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -140,7 +138,7 @@ fun TodoItem(item: Note, index: Int) {
                         fontFamily = FontFamily(Font(R.font.iransans_bold))
                     )
                 )
-                var threeDotsVisibility by remember { mutableStateOf(true) }
+                var threeDotsVisibility by remember { mutableStateOf(false) }
                 var maxLines by remember { mutableStateOf(5) }
                 // var lineCount by remember { mutableStateOf(0) }
                 Box {
@@ -182,7 +180,52 @@ fun TodoItem(item: Note, index: Int) {
                         },
                     )
                 }
-
+                val iconsModifier =
+                    Modifier
+                        .size(25.dp)
+                val iconsContainerModifier = Modifier.padding(horizontal = 5.dp, vertical = 20.dp)
+                val copyVectorImage: ImageVector =
+                    ImageVector.vectorResource(id = R.drawable.ic_copy)
+                val shareVectorImage: ImageVector =
+                    ImageVector.vectorResource(id = R.drawable.ic_share)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Absolute.Right
+                ) {
+                    Box(modifier = iconsContainerModifier) {
+                        IconButton(
+                            modifier = iconsModifier,
+                            content = {
+                                Icon(
+                                    tint = Color.White,
+                                    imageVector = copyVectorImage,
+                                    contentDescription = "copy Text"
+                                )
+                            },
+                            onClick = {
+                                maxLines = Int.MAX_VALUE
+                                threeDotsVisibility = false
+                            },
+                        )
+                    }
+                    Box(modifier = iconsContainerModifier)
+                    {
+                        IconButton(
+                            modifier = iconsModifier,
+                            content = {
+                                Icon(
+                                    tint = Color.White,
+                                    imageVector = shareVectorImage,
+                                    contentDescription = "share Text"
+                                )
+                            },
+                            onClick = {
+                                maxLines = Int.MAX_VALUE
+                                threeDotsVisibility = false
+                            },
+                        )
+                    }
+                }
                 Row {
                     var date = ""
                     val dateFormat: SimpleDateFormat =
@@ -226,13 +269,6 @@ fun TodoItem(item: Note, index: Int) {
                         )
                     )
                 }
-                // val checked = remember { mutableStateOf(false) }
-                /*
-                                Checkbox(checked = checked.value, colors = CheckboxDefaults.colors(
-                                    checkmarkColor = whiteColor
-                                ), onCheckedChange = { isChecked -> checked.value = isChecked })
-                */
-
             }
         }
     }
@@ -344,15 +380,6 @@ fun CustomDialog(
     }
 }
 
-fun checkIfNotEmpty(noteTitle: String, noteText: String): Boolean {
-    if (noteTitle.isEmpty() || noteText.isEmpty()) {
-        return false
-    }
-    if (noteTitle.isBlank() || noteText.isBlank()) {
-        return false
-    }
-    return true
-}
 
 @Composable
 fun CustomNoteTextField(
@@ -403,27 +430,4 @@ fun CustomNoteTextField(
             )
         },
     )
-}
-
-@Composable
-fun LazyLoadLongText(text: String) {
-    val stringList = splitStringByWords(text, 50)
-    var passageLength by remember { mutableStateOf(stringList.size * 100) }
-    Box {
-        Text(
-            modifier = Modifier
-                .padding(10.dp)
-                .fillMaxWidth(),
-            text = text,
-            maxLines = 5,
-            overflow = TextOverflow.Ellipsis,
-            style = TextStyle(
-                textDirection = TextDirection.Rtl,
-                textAlign = TextAlign.Justify,
-                fontSize = 16.sp,
-                color = whiteColor,
-                fontFamily = FontFamily(Font(R.font.iransans_regular))
-            )
-        )
-    }
 }

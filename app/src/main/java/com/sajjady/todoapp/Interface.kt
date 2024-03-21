@@ -10,3 +10,8 @@ interface OnAddNoteItemListener {
     fun addNoteUpdateList(note: Note)
     fun showSnackbar()
 }
+
+interface OnListFlingListener {
+    fun onListFlingDown()
+    fun onListFlingUp()
+}

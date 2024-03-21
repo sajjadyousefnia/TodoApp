@@ -1,14 +1,10 @@
 package com.sajjady.todoapp
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.Text
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,13 +22,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.sajjady.todoapp.Database.Domain.Note
 import com.sajjady.todoapp.Database.NoteDatabase
@@ -53,6 +49,7 @@ class MainActivity : ComponentActivity() {
                 var isSnackbarShown by remember {
                     mutableStateOf(false)
                 }
+                var visibilityFAB by remember { mutableStateOf(true) }
 
                 val db = NoteDatabase.getInstance(this)
 
@@ -88,10 +85,8 @@ class MainActivity : ComponentActivity() {
                                     isSnackbarShown = false
                                 }
                             },
-                            modifier = Modifier
-                                .padding(30.dp, 0.dp),
-                            dismissAction = {
-                            },
+                            modifier = Modifier.padding(30.dp, 0.dp),
+                            dismissAction = {},
                         ) {
                             Text(
                                 modifier = Modifier.fillMaxWidth(),
@@ -106,10 +101,18 @@ class MainActivity : ComponentActivity() {
 
                         false -> {}
                     }
-                }, topBar = { MyToolbar() }, floatingActionButton = {
-                    MyFloatingActionButton(floatingActionButtonClickListener)
-                }, modifier = Modifier.fillMaxSize()
-                ) { innerPadding ->
+                }, topBar = { MyToolbar() }, floatingActionButton = when (visibilityFAB) {
+                    true -> {
+                        {
+                            MyFloatingActionButton(floatingActionButtonClickListener)
+                        }
+                    }
+
+                    false -> {
+                        {}
+                    }
+
+                }, modifier = Modifier.fillMaxSize()) { innerPadding ->
                     if (openDialog) {
                         CustomDialog(this, "Sajjad Agha gole bagha", {
                             openDialog = false
@@ -117,7 +120,17 @@ class MainActivity : ComponentActivity() {
                             "sajjad"
                         }, onAddNoteItemListChangeListener)
                     }
-                    NotesList(this, items, innerPadding)
+                    NotesList(items,
+                        innerPadding,
+                        onListFlingListener = object : OnListFlingListener {
+                            override fun onListFlingDown() {
+                                visibilityFAB = false
+                            }
+
+                            override fun onListFlingUp() {
+                                visibilityFAB = true
+                            }
+                        })
                 }
             }
         }
@@ -126,13 +139,26 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NotesList(
-    context: Context,
     items: SnapshotStateList<Note>,
-    innerPadding: PaddingValues
+    innerPadding: PaddingValues,
+    onListFlingListener: OnListFlingListener
 ) {
-
+    // val lazyScrollState = rememberLazyListState()
+    // val scrollState = rememberScrollState()
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                if (consumed.y < 0) {
+                    onListFlingListener.onListFlingDown()
+                } else if (consumed.y > 0) {
+                    onListFlingListener.onListFlingUp()
+                }
+                return super.onPostFling(consumed, available)
+            }
+        }
+    }
     LazyColumn(
-        modifier = Modifier.fillMaxWidth(), contentPadding = innerPadding
+        modifier = Modifier.fillMaxWidth().nestedScroll(nestedScrollConnection), contentPadding = innerPadding
     ) {
         itemsIndexed(items) { index, item ->
             TodoItem(item, index)
@@ -150,8 +176,7 @@ val فخخم = Modifier
 
     }
     .background(Color.Red)
-    .clickable { */
-/* Handle click event *//*
+    .clickable { *//* Handle click event *//*
  }
     .then(Modifier.border(2.dp, Color.Black))
 

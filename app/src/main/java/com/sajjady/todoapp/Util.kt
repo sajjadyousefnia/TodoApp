@@ -40,3 +40,12 @@ fun linesCalculator(fontSize: Int, wordsCount: Int) {
 
 }
 
+fun checkIfNotEmpty(noteTitle: String, noteText: String): Boolean {
+    if (noteTitle.isEmpty() || noteText.isEmpty()) {
+        return false
+    }
+    if (noteTitle.isBlank() || noteText.isBlank()) {
+        return false
+    }
+    return true
+}
