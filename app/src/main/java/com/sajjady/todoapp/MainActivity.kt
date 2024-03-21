@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.Text
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -76,43 +79,44 @@ class MainActivity : ComponentActivity() {
                         openDialog = open
                     }
                 }
-                Scaffold(snackbarHost = {
-                    when (isSnackbarShown) {
-                        true -> Snackbar(
-                            action = {
-                                LaunchedEffect(Unit) {
-                                    delay(2000)
-                                    isSnackbarShown = false
-                                }
-                            },
-                            modifier = Modifier.padding(30.dp, 0.dp),
-                            dismissAction = {},
-                        ) {
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                style = TextStyle(
+                Scaffold(
+                    snackbarHost = {
+                        when (isSnackbarShown) {
+                            true -> Snackbar(
+                                action = {
+                                    LaunchedEffect(Unit) {
+                                        delay(2000)
+                                        isSnackbarShown = false
+                                    }
+                                },
+                                modifier = Modifier.padding(30.dp, 0.dp),
+                                dismissAction = {},
+                            ) {
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    style = TextStyle(
+                                        fontFamily = FontFamily(Font(R.font.iransans_bold)),
+                                    ),
                                     fontFamily = FontFamily(Font(R.font.iransans_bold)),
-                                ),
-                                fontFamily = FontFamily(Font(R.font.iransans_bold)),
-                                textAlign = TextAlign.Center,
-                                text = "یادداشت اضافه شد",
-                            )
-                        }
+                                    textAlign = TextAlign.Center,
+                                    text = "یادداشت اضافه شد",
+                                )
+                            }
 
-                        false -> {}
-                    }
-                }, topBar = { MyToolbar() }, floatingActionButton = when (visibilityFAB) {
-                    true -> {
-                        {
+                            false -> {}
+                        }
+                    },
+                    topBar = { MyToolbar() },
+                    floatingActionButton = {
+                        AnimatedVisibility(
+                            visible = visibilityFAB,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
                             MyFloatingActionButton(floatingActionButtonClickListener)
                         }
-                    }
-
-                    false -> {
-                        {}
-                    }
-
-                }, modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    }, modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->
                     if (openDialog) {
                         CustomDialog(this, "Sajjad Agha gole bagha", {
                             openDialog = false
@@ -158,7 +162,9 @@ fun NotesList(
         }
     }
     LazyColumn(
-        modifier = Modifier.fillMaxWidth().nestedScroll(nestedScrollConnection), contentPadding = innerPadding
+        modifier = Modifier
+            .fillMaxWidth()
+            .nestedScroll(nestedScrollConnection), contentPadding = innerPadding
     ) {
         itemsIndexed(items) { index, item ->
             TodoItem(item, index)
