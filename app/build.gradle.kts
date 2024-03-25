@@ -74,11 +74,11 @@ dependencies {
 
     implementation ("com.github.samanzamani:PersianDate:1.7.1")
 
-    implementation ("androidx.compose.ui:ui-tooling-preview:1.6.3")
-    implementation ("androidx.compose.ui:ui:$1.6.3")
-    implementation("androidx.compose.ui:ui-geometry:1.6.3")
+    implementation (libs.ui.tooling.preview)
+    implementation (libs.ui)
+    implementation(libs.androidx.ui.geometry)
     implementation("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.9.0-1.0.13")
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 }

@@ -1,6 +1,9 @@
 package com.sajjady.todoapp.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,6 +23,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -27,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -50,19 +56,20 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextIndent
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.sajjady.todoapp.Database.Domain.Note
 import com.sajjady.todoapp.OnAddNoteItemListener
+import com.sajjady.todoapp.OnCopyNoteItemListener
 import com.sajjady.todoapp.OnFloatingActionButtonClickListener
+import com.sajjady.todoapp.SearchAppBarInterface
 import com.sajjady.todoapp.R
 import com.sajjady.todoapp.checkIfNotEmpty
-import com.sajjady.todoapp.splitStringByWords
-import com.sajjady.todoapp.ui.theme.primaryColor
-import com.sajjady.todoapp.ui.theme.whiteColor
+import com.sajjady.todoapp.ui.theme.md_theme_light_onPrimaryContainer
+import com.sajjady.todoapp.ui.theme.md_theme_light_onTertiary
+import com.sajjady.todoapp.ui.theme.md_theme_light_primary
+import com.sajjady.todoapp.ui.theme.md_theme_light_tertiary
 import saman.zamani.persiandate.PersianDate
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -77,47 +84,37 @@ fun MyFloatingActionButton(floatingActionButtonClickListener: OnFloatingActionBu
         onClick = {
             floatingActionButtonClickListener.showNoteDialog(true)
         },
-        containerColor = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
         shape = CircleShape
     ) {
         Icon(
             imageVector = Icons.Filled.Add,
-            tint = whiteColor,
+            /*
+                        tint = whiteColor,
+            */
             contentDescription = "Add",
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MyToolbar() {
-    TopAppBar(title = {
-        Text("My App")
-    }, navigationIcon = {
-        IconButton(onClick = { /* Handle navigation icon click */ }) {
-            Icon(imageVector = Icons.Filled.Menu, contentDescription = "Menu")
-        }
-    }, actions = {
-        IconButton(onClick = { /* Handle action icon click */ }) {
-            Icon(imageVector = Icons.Filled.Search, contentDescription = "Search")
-        }
-    }, colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = primaryColor
-    )
-    )
-}
 
+/*
+ IconButton(onClick = {}) {Icon(imageVector = Icons.Filled.Search, contentDescription = "Search")}
+*/
 @Composable
-fun TodoItem(item: Note, index: Int) {
+fun TodoItem(
+    context: Context, item: Note, index: Int, onCopyNoteItemListener: OnCopyNoteItemListener
+) {
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = primaryColor
+        colors = CardColors(
+            containerColor = md_theme_light_tertiary,
+            contentColor = md_theme_light_onTertiary,
+            disabledContainerColor = md_theme_light_tertiary,
+            disabledContentColor = md_theme_light_onTertiary
         ),
         modifier = Modifier
             .padding(50.dp, 25.dp, 50.dp, 25.dp)
             .fillMaxWidth()
-            .background(primaryColor, CircleShape)
+            .background(md_theme_light_primary, CircleShape)
     ) {
         Box(
             Modifier.wrapContentHeight()
@@ -134,7 +131,6 @@ fun TodoItem(item: Note, index: Int) {
                     style = TextStyle(
                         fontSize = 22.sp,
                         textDirection = TextDirection.Rtl,
-                        color = whiteColor,
                         fontFamily = FontFamily(Font(R.font.iransans_bold))
                     )
                 )
@@ -156,7 +152,6 @@ fun TodoItem(item: Note, index: Int) {
                             textDirection = TextDirection.Rtl,
                             textAlign = TextAlign.Justify,
                             fontSize = 16.sp,
-                            color = whiteColor,
                             fontFamily = FontFamily(Font(R.font.iransans_regular))
                         )
                     )
@@ -166,10 +161,11 @@ fun TodoItem(item: Note, index: Int) {
                     val vectorImage: ImageVector =
                         ImageVector.vectorResource(id = R.drawable.ic_three_dots)
                     IconButton(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .size(20.dp),
                         content = {
                             Icon(
-                                tint = Color.White,
                                 imageVector = vectorImage,
                                 contentDescription = "Long Text"
                             )
@@ -180,9 +176,7 @@ fun TodoItem(item: Note, index: Int) {
                         },
                     )
                 }
-                val iconsModifier =
-                    Modifier
-                        .size(25.dp)
+                val iconsModifier = Modifier.size(25.dp)
                 val iconsContainerModifier = Modifier.padding(horizontal = 5.dp, vertical = 20.dp)
                 val copyVectorImage: ImageVector =
                     ImageVector.vectorResource(id = R.drawable.ic_copy)
@@ -197,31 +191,49 @@ fun TodoItem(item: Note, index: Int) {
                             modifier = iconsModifier,
                             content = {
                                 Icon(
-                                    tint = Color.White,
                                     imageVector = copyVectorImage,
                                     contentDescription = "copy Text"
                                 )
                             },
                             onClick = {
-                                maxLines = Int.MAX_VALUE
-                                threeDotsVisibility = false
+                                val clipboardManager =
+                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clipData = ClipData.newPlainText("text", item.content)
+                                clipboardManager.setPrimaryClip(clipData)
+                                onCopyNoteItemListener.showCopyPressedMessage("رونوشت متن با موفقیت تنظیم شد")
                             },
                         )
                     }
-                    Box(modifier = iconsContainerModifier)
-                    {
+                    Box(modifier = iconsContainerModifier) {
                         IconButton(
                             modifier = iconsModifier,
                             content = {
                                 Icon(
-                                    tint = Color.White,
                                     imageVector = shareVectorImage,
                                     contentDescription = "share Text"
                                 )
                             },
                             onClick = {
-                                maxLines = Int.MAX_VALUE
-                                threeDotsVisibility = false
+
+                                /*Create an ACTION_SEND Intent*/
+                                val intent = Intent(Intent.ACTION_SEND)
+
+                                /*This will be the actual content you wish you share.*/
+
+                                /*The type of the content is text, obviously.*/
+                                intent.setType("text/plain")
+
+                                /*Applying information Subject and Body.*/
+                                intent.putExtra(
+                                    Intent.EXTRA_SUBJECT, item.title
+                                )
+                                intent.putExtra(Intent.EXTRA_TEXT, item.content)
+                                context.startActivity(
+                                    Intent.createChooser(
+                                        intent, item.content
+                                    )
+                                )
+
                             },
                         )
                     }
@@ -247,7 +259,6 @@ fun TodoItem(item: Note, index: Int) {
                         textAlign = TextAlign.Center,
                         style = TextStyle(
                             textIndent = TextIndent(10.sp),
-                            color = whiteColor,
                             fontSize = 12.sp,
                             fontFamily = FontFamily(Font(R.font.iransans_regular))
                         )
@@ -261,7 +272,6 @@ fun TodoItem(item: Note, index: Int) {
                         textAlign = TextAlign.Center,
                         style = TextStyle(
                             textIndent = TextIndent(10.sp),
-                            color = whiteColor,
                             textDirection = TextDirection.Rtl,
                             textAlign = TextAlign.Justify,
                             fontSize = 12.sp,
@@ -291,7 +301,7 @@ fun CustomDialog(
             mutableStateOf(false)
         }
         Surface(
-            modifier = Modifier, shape = RoundedCornerShape(16.dp), color = Color.White
+            modifier = Modifier, shape = RoundedCornerShape(16.dp),
         ) {
             Box(
                 modifier = Modifier.wrapContentHeight(),
@@ -304,7 +314,7 @@ fun CustomDialog(
                     Text(
                         modifier = Modifier.fillMaxWidth(), text = "درج یادداشت", style = TextStyle(
                             fontFamily = FontFamily(Font(R.font.iransans_bold)),
-                            color = primaryColor,
+                            color = md_theme_light_primary,
                             fontSize = 18.sp,
                             textAlign = TextAlign.Center
                         )
@@ -322,7 +332,6 @@ fun CustomDialog(
 
                                 true -> {
                                     isEligibleToAdd = true
-                                    addButtonTextColor = Color.White
                                 }
                             }
                         })
@@ -339,7 +348,6 @@ fun CustomDialog(
 
                                 true -> {
                                     isEligibleToAdd = true
-                                    addButtonTextColor = Color.White
                                 }
                             }
                         })
@@ -359,12 +367,7 @@ fun CustomDialog(
                                 onAddNoteItemListChangeListener.showSnackbar()
                                 setShowDialog(false)
                             }
-                        }, shape = RoundedCornerShape(10.dp), colors = IconButtonColors(
-                            containerColor = primaryColor,
-                            contentColor = whiteColor,
-                            disabledContainerColor = primaryColor,
-                            disabledContentColor = whiteColor
-                        )
+                        }, shape = RoundedCornerShape(10.dp)
                     ) {
                         Text(
                             modifier = Modifier.fillMaxWidth(), text = "افزودن", style = TextStyle(
@@ -388,7 +391,7 @@ fun CustomNoteTextField(
     val titleTextStyle = TextStyle(
         textDirection = TextDirection.Rtl,
         fontFamily = FontFamily(Font(R.font.iransans_regular)),
-        color = primaryColor,
+        color = md_theme_light_primary,
         textAlign = TextAlign.Right
     )
     TextField(
@@ -401,15 +404,15 @@ fun CustomNoteTextField(
             disabledContainerColor = Color.Transparent,
             unfocusedPlaceholderColor = Color.LightGray,
             focusedPlaceholderColor = Color.LightGray,
-            focusedIndicatorColor = primaryColor,
-            unfocusedIndicatorColor = primaryColor
+            focusedIndicatorColor = md_theme_light_primary,
+            unfocusedIndicatorColor = md_theme_light_primary
         ),
         textStyle = titleTextStyle,
         modifier = Modifier
             .fillMaxWidth()
             .border(
                 border = BorderStroke(
-                    width = 1.dp, color = primaryColor
+                    width = 1.dp, color = md_theme_light_primary
                 )
             )
             .onFocusEvent { },

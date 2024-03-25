@@ -113,7 +113,6 @@ private fun Tooltip(
                         lineHeight = 18.sp,
                         fontWeight = FontWeight.Medium,
                     ),
-                    color = Color.White,
                 )
             }
         )

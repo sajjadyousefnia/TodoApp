@@ -1,141 +1,45 @@
 package com.sajjady.todoapp
 
+import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.Text
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.unit.dp
 import com.sajjady.todoapp.Database.Domain.Note
-import com.sajjady.todoapp.Database.NoteDatabase
-import com.sajjady.todoapp.ui.CustomDialog
-import com.sajjady.todoapp.ui.MyFloatingActionButton
-import com.sajjady.todoapp.ui.MyToolbar
+import com.sajjady.todoapp.ui.Notes.NotesContainer
 import com.sajjady.todoapp.ui.TodoItem
 import com.sajjady.todoapp.ui.theme.TodoAppTheme
-import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+
+   /*     val onBackPressedDispatcher: OnBackPressedDispatcher = OnBackPressedDispatcher()
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                    Toast.makeText(this@MainActivity, "back pressed", Toast.LENGTH_SHORT).show()
+            }
+        })*/
+
         setContent {
-
             TodoAppTheme {
-                var isSnackbarShown by remember {
-                    mutableStateOf(false)
-                }
-                var visibilityFAB by remember { mutableStateOf(true) }
-
-                val db = NoteDatabase.getInstance(this)
-
-                val items = remember {
-                    db.noteDao().getAll().toMutableStateList()
-                }
-
-                val onAddNoteItemListChangeListener: OnAddNoteItemListener =
-                    object : OnAddNoteItemListener {
-                        override fun addNoteUpdateList(note: Note) {
-                            NoteDatabase.getInstance(this@MainActivity).noteDao().insert(note)
-                            items.add(note)
-                        }
-
-                        override fun showSnackbar() {
-                            isSnackbarShown = true
-                        }
-                    }
-
-                var openDialog by remember { mutableStateOf(false) }
-                var floatingActionButtonClickListener: OnFloatingActionButtonClickListener? = null
-                floatingActionButtonClickListener = object : OnFloatingActionButtonClickListener {
-                    override fun showNoteDialog(open: Boolean) {
-                        openDialog = open
-                    }
-                }
-                Scaffold(
-                    snackbarHost = {
-                        when (isSnackbarShown) {
-                            true -> Snackbar(
-                                action = {
-                                    LaunchedEffect(Unit) {
-                                        delay(2000)
-                                        isSnackbarShown = false
-                                    }
-                                },
-                                modifier = Modifier.padding(30.dp, 0.dp),
-                                dismissAction = {},
-                            ) {
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    style = TextStyle(
-                                        fontFamily = FontFamily(Font(R.font.iransans_bold)),
-                                    ),
-                                    fontFamily = FontFamily(Font(R.font.iransans_bold)),
-                                    textAlign = TextAlign.Center,
-                                    text = "یادداشت اضافه شد",
-                                )
-                            }
-
-                            false -> {}
-                        }
-                    },
-                    topBar = { MyToolbar() },
-                    floatingActionButton = {
-                        AnimatedVisibility(
-                            visible = visibilityFAB,
-                            enter = fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            MyFloatingActionButton(floatingActionButtonClickListener)
-                        }
-                    }, modifier = Modifier.fillMaxSize()
-                ) { innerPadding ->
-                    if (openDialog) {
-                        CustomDialog(this, "Sajjad Agha gole bagha", {
-                            openDialog = false
-                        }, {
-                            "sajjad"
-                        }, onAddNoteItemListChangeListener)
-                    }
-                    NotesList(items,
-                        innerPadding,
-                        onListFlingListener = object : OnListFlingListener {
-                            override fun onListFlingDown() {
-                                visibilityFAB = false
-                            }
-
-                            override fun onListFlingUp() {
-                                visibilityFAB = true
-                            }
-                        })
-                }
+                NotesContainer(context = this)
             }
         }
     }
@@ -143,12 +47,12 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NotesList(
+    context: Context,
     items: SnapshotStateList<Note>,
     innerPadding: PaddingValues,
-    onListFlingListener: OnListFlingListener
+    onListFlingListener: OnListFlingListener,
+    onCopyNoteItemListener: OnCopyNoteItemListener
 ) {
-    // val lazyScrollState = rememberLazyListState()
-    // val scrollState = rememberScrollState()
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
@@ -167,7 +71,7 @@ fun NotesList(
             .nestedScroll(nestedScrollConnection), contentPadding = innerPadding
     ) {
         itemsIndexed(items) { index, item ->
-            TodoItem(item, index)
+            TodoItem(context, item, index, onCopyNoteItemListener)
         }
     }
 
